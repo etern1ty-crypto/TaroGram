@@ -536,6 +536,16 @@ public class Camera2Session {
                     if (zoomRatio != null) {
                         captureRequestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio);
                     }
+                    // Vendor key for OPPO/Realme/OnePlus HALs that expose
+                    // the wide lens outside the public ZOOM_RATIO range.
+                    // Stock Realme Camera uses this on RMX3709-class
+                    // devices to switch to ultra-wide at 0.6x.
+                    if (uz.unnarsx.cherrygram.tarocamera.TaroCameraConfig.INSTANCE.getUseOplusVendorZoom()) {
+                        Float unclamped = uz.unnarsx.cherrygram.tarocamera.TaroCameraConfig.INSTANCE.resolveBackZoomRatioUnclamped();
+                        if (unclamped != null) {
+                            uz.unnarsx.cherrygram.tarocamera.TaroCameraVendorKeys.INSTANCE.applyOplusZoomRatio(captureRequestBuilder, unclamped);
+                        }
+                    }
                 } catch (Throwable t) {
                     FileLog.e("Camera2Session: TaroCamera zoom_ratio override failed", t);
                 }

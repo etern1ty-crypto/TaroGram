@@ -29,6 +29,7 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
     private val regenSecretRow = 7
     private val statusRow = 8
     private val diagnosticRow = 9
+    private val forceRestartRow = 10
 
     override fun getTitle(): CharSequence = getString(R.string.TG_SmartProxy_Category)
 
@@ -117,6 +118,14 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
 
         items.add(
             UItem.asButton(
+                forceRestartRow,
+                getString(R.string.TG_SmartProxy_ForceRestart),
+                getString(R.string.TG_SmartProxy_ForceRestart_Desc),
+            ),
+        )
+
+        items.add(
+            UItem.asButton(
                 diagnosticRow,
                 getString(R.string.TG_Diagnostic_Export),
                 getString(R.string.TG_Diagnostic_Export_Desc),
@@ -157,6 +166,13 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
                 SmartProxyConfig.secret = newSecret
                 if (SmartProxyManager.isRunning) showRestartHint()
                 listView.adapter.update(true)
+            }
+            forceRestartRow -> {
+                SmartProxyManager.triggerManualRecovery()
+                BulletinFactory.of(this).createSimpleBulletin(
+                    R.raw.contact_check,
+                    getString(R.string.TG_SmartProxy_ForceRestart_Toast),
+                ).show()
             }
             diagnosticRow -> {
                 DiagnosticExporter.exportAndShare(context!!)

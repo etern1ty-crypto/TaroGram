@@ -31,6 +31,7 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
     private val lensModeRow = 103
     private val wideZoomRow = 104
     private val teleZoomRow = 105
+    private val oplusVendorZoomRow = 106
 
     private val stabilizationRow = 201
     private val hdrRow = 202
@@ -138,6 +139,12 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
                 ),
             )
         }
+        items.add(
+            UItem.asCheck(
+                oplusVendorZoomRow,
+                getString(R.string.TG_TaroCamera_OplusVendorZoom),
+            ).setChecked(TaroCameraConfig.useOplusVendorZoom),
+        )
         items.add(UItem.asShadow(getString(R.string.TG_TaroCamera_LensFooter)))
         items.add(UItem.asHeader(getString(R.string.TG_TaroCamera_QualityHeader)))
         items.add(
@@ -254,6 +261,10 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
                 listOf(1.5f, 2.0f, 2.5f, 3.0f, 5.0f, 10.0f),
                 TaroCameraConfig.teleZoomRatio,
             ) { TaroCameraConfig.teleZoomRatio = it; listView.adapter.update(true) }
+            oplusVendorZoomRow -> {
+                TaroCameraConfig.useOplusVendorZoom = !TaroCameraConfig.useOplusVendorZoom
+                listView.adapter.update(true)
+            }
         }
     }
 

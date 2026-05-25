@@ -42,6 +42,10 @@ object TaroCameraConfig {
     private const val KEY_CUSTOM_ZOOM_RATIO = "custom_zoom_ratio"
     private const val KEY_WIDE_ZOOM_RATIO = "wide_zoom_ratio"
     private const val KEY_TELE_ZOOM_RATIO = "tele_zoom_ratio"
+    // Vendor-key routing for OPPO/Realme/OnePlus HALs where the wide
+    // lens is reachable through `com.oplus.original.zoomRatio` outside
+    // the standard CONTROL_ZOOM_RATIO_RANGE.
+    private const val KEY_USE_OPLUS_VENDOR_ZOOM = "use_oplus_vendor_zoom"
 
     private val prefs by lazy { ApplicationLoader.applicationContext.getSharedPreferences(PREFS_NAME, 0) }
 
@@ -105,6 +109,10 @@ object TaroCameraConfig {
         get() = prefs.getFloat(KEY_TELE_ZOOM_RATIO, 3.0f)
         set(v) = prefs.edit().putFloat(KEY_TELE_ZOOM_RATIO, v).apply()
 
+    var useOplusVendorZoom: Boolean
+        get() = prefs.getBoolean(KEY_USE_OPLUS_VENDOR_ZOOM, true)
+        set(v) = prefs.edit().putBoolean(KEY_USE_OPLUS_VENDOR_ZOOM, v).apply()
+
     /**
      * Resolves the desired CONTROL_ZOOM_RATIO value for the back camera,
      * clamped to the HAL-supported zoom range. Returns null for "auto" or
@@ -121,6 +129,20 @@ object TaroCameraConfig {
             else -> return null
         }
         return target.coerceIn(range.lower, range.upper)
+    }
+
+    /**
+     * Returns the *unclamped* desired zoom ratio for the back camera,
+     * intended to be pushed through OPPO/Realme/OnePlus vendor keys that
+     * bypass the standard CONTROL_ZOOM_RATIO_RANGE. Returns null when
+     * lensMode is "auto".
+     */
+    fun resolveBackZoomRatioUnclamped(): Float? = when (lensMode) {
+        "main" -> 1.0f
+        "wide" -> wideZoomRatio
+        "tele" -> teleZoomRatio
+        "custom" -> customZoomRatio
+        else -> null
     }
 
     fun targetResolution(): android.util.Size? = when (resolution) {

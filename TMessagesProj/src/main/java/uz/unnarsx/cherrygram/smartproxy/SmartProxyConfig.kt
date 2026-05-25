@@ -75,7 +75,7 @@ object SmartProxyConfig {
      * no active connection or a fatal error we run the recovery cascade.
      */
     var watchdogIntervalSec: Int
-        get() = prefs.getInt("watchdog_sec", 30)
+        get() = prefs.getInt("watchdog_sec", 10)
         set(v) = prefs.edit().putInt("watchdog_sec", v).apply()
 
     /**
@@ -104,4 +104,18 @@ object SmartProxyConfig {
     var noInternetBackoffSec: Int
         get() = prefs.getInt("no_internet_backoff_sec", 30)
         set(v) = prefs.edit().putInt("no_internet_backoff_sec", v).apply()
+
+    /**
+     * Whether the watchdog should TCP-probe the local listener socket every
+     * tick. Catches the case where the native process is alive but its
+     * listener died — Telegram cannot connect through it any more.
+     */
+    var socketProbeEnabled: Boolean
+        get() = prefs.getBoolean("socket_probe", true)
+        set(v) = prefs.edit().putBoolean("socket_probe", v).apply()
+
+    /** Timeout (ms) for the local-socket probe. Loopback so very short. */
+    var socketProbeTimeoutMs: Int
+        get() = prefs.getInt("socket_probe_timeout_ms", 1500)
+        set(v) = prefs.edit().putInt("socket_probe_timeout_ms", v).apply()
 }

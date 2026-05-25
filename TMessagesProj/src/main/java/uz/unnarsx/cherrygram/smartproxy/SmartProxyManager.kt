@@ -42,6 +42,8 @@ object SmartProxyManager {
     @Volatile private var lastRecoveryReason: String = ""
     @Volatile private var lastTransportFlip: String = ""
     @Volatile private var consecutiveFailures: Int = 0
+    @Volatile private var lastSocketProbeOk: Boolean? = null
+    @Volatile private var totalRecoveries: Int = 0
 
     @JvmStatic
     val isRunning: Boolean get() = workerThread != null && !lastStartFailed
@@ -155,18 +157,23 @@ object SmartProxyManager {
             override fun run() {
                 if (!watchdogRunning) return
                 try {
-                    val stats = NativeProxy.getStats()
-                    if (stats == null) {
-                        FileLog.w("$TAG: watchdog — null stats, restarting native proxy")
-                        recoverInline(reason = "null_stats")
-                    } else {
-                        val node = mapper.readTree(stats)
-                        val running = node.path("running").asBoolean(true)
-                        val lastErr = node.path("last_error").asText("")
-                        if (!running || lastErr.contains("fatal", ignoreCase = true)) {
-                            FileLog.w("$TAG: watchdog — proxy down (running=$running, err=$lastErr) — recovering")
-                            recoverInline(reason = if (!running) "native_not_running" else lastErr)
-                        } else {
+                    val nativeDown = isNativeDown()
+                    val socketDown = SmartProxyConfig.socketProbeEnabled && !probeLocalSocket()
+                    lastSocketProbeOk = if (SmartProxyConfig.socketProbeEnabled) !socketDown else null
+                    when {
+                        nativeDown -> {
+                            FileLog.w("$TAG: watchdog — native side down, recovering")
+                            recoverInline(reason = "native_down")
+                        }
+                        socketDown -> {
+                            // Native says it's alive but the listener socket is gone.
+                            // Telegram cannot reach us through 127.0.0.1:$port any more.
+                            // This is the kind of zombie state that the previous
+                            // watchdog missed completely.
+                            FileLog.w("$TAG: watchdog — local socket dead but native running, recovering")
+                            recoverInline(reason = "socket_dead")
+                        }
+                        else -> {
                             // Healthy tick — reset the down marker and the failure streak.
                             if (lastDownAtMs != 0L) FileLog.d("$TAG: watchdog — back to healthy state")
                             lastDownAtMs = 0L
@@ -179,6 +186,41 @@ object SmartProxyManager {
                 worker?.postDelayed(this, intervalMs)
             }
         }, intervalMs)
+    }
+
+    /**
+     * Returns true if the native proxy is reporting itself as down via
+     * its stats blob or if [NativeProxy.getStats] is not answering at all.
+     */
+    private fun isNativeDown(): Boolean {
+        val stats = try { NativeProxy.getStats() } catch (t: Throwable) {
+            FileLog.w("$TAG: getStats threw: ${t.message}")
+            return true
+        } ?: return true
+        return try {
+            val node = mapper.readTree(stats)
+            val running = node.path("running").asBoolean(true)
+            val lastErr = node.path("last_error").asText("")
+            !running || lastErr.contains("fatal", ignoreCase = true)
+        } catch (t: Throwable) {
+            FileLog.w("$TAG: stats parse threw: ${t.message}")
+            true
+        }
+    }
+
+    /** TCP connect to 127.0.0.1:$port with a short timeout. */
+    private fun probeLocalSocket(): Boolean {
+        return try {
+            java.net.Socket().use { s ->
+                s.connect(
+                    java.net.InetSocketAddress(SmartProxyConfig.host, SmartProxyConfig.port),
+                    SmartProxyConfig.socketProbeTimeoutMs,
+                )
+                true
+            }
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     /**
@@ -200,8 +242,9 @@ object SmartProxyManager {
         val now = System.currentTimeMillis()
         if (lastDownAtMs == 0L) lastDownAtMs = now
 
+        val skipCooldown = reason == "manual" || reason == "socket_dead"
         val cooldownMs = SmartProxyConfig.recoveryCooldownSec.coerceAtLeast(1) * 1000L
-        if (now - lastDownAtMs < cooldownMs) {
+        if (!skipCooldown && now - lastDownAtMs < cooldownMs) {
             FileLog.d("$TAG: recovery cooldown ${(now - lastDownAtMs) / 1000}s/${cooldownMs / 1000}s — waiting")
             return
         }
@@ -236,8 +279,19 @@ object SmartProxyManager {
         } catch (_: Throwable) { /* keep existing secret on failure */ }
 
         lastRecoveryAttemptMs = now
-        FileLog.w("$TAG: recovery — restarting native proxy (flipped=$flipped, reason=$reason)")
+        totalRecoveries += 1
+        FileLog.w("$TAG: recovery — full teardown + restart (flipped=$flipped, reason=$reason, attempt=$totalRecoveries)")
+
+        // Full teardown: stop the native proxy and wait for the listener
+        // socket to actually go away. Without this wait we sometimes
+        // restart while the previous listener is still holding the port,
+        // causing the new StartProxy to bind-fail silently.
         try { NativeProxy.stopProxy() } catch (_: Throwable) {}
+        for (i in 0 until 20) {
+            if (!probeLocalSocket()) break
+            try { Thread.sleep(100) } catch (_: InterruptedException) { break }
+        }
+
         try {
             NativeProxy.setCfProxyConfig(
                 enabled = SmartProxyConfig.cloudFlareEnabled,
@@ -253,8 +307,18 @@ object SmartProxyManager {
             )
             if (rc == 0) {
                 lastDownAtMs = 0L
-                // Keep consecutiveFailures as-is — the next OK tick resets it.
-                if (SmartProxyConfig.autoApplyToTelegram) applyProxyToTelegram()
+                // Verify the listener actually came up before announcing success.
+                var alive = false
+                for (i in 0 until 30) {
+                    if (probeLocalSocket()) { alive = true; break }
+                    try { Thread.sleep(100) } catch (_: InterruptedException) { break }
+                }
+                if (alive) {
+                    FileLog.d("$TAG: recovery — listener up after ${totalRecoveries} attempt(s)")
+                    if (SmartProxyConfig.autoApplyToTelegram) applyProxyToTelegram()
+                } else {
+                    FileLog.e("$TAG: recovery — native StartProxy=0 but socket never came up")
+                }
             } else {
                 FileLog.e("$TAG: recovery — native StartProxy returned $rc")
             }
@@ -293,10 +357,26 @@ object SmartProxyManager {
         sb.append("\"lastDownAtMs\":").append(lastDownAtMs).append(',')
         sb.append("\"lastRecoveryAttemptMs\":").append(lastRecoveryAttemptMs).append(',')
         sb.append("\"lastPingOk\":").append(lastPingOk).append(',')
+        sb.append("\"lastSocketProbeOk\":").append(lastSocketProbeOk).append(',')
+        sb.append("\"totalRecoveries\":").append(totalRecoveries).append(',')
         sb.append("\"lastRecoveryReason\":\"").append(lastRecoveryReason.replace("\"", "\\\"")).append('\"').append(',')
         sb.append("\"lastTransportFlip\":\"").append(lastTransportFlip).append('\"')
         sb.append('}')
         return sb.toString()
+    }
+
+    /**
+     * Manually trigger a teardown + restart, bypassing the cooldown.
+     * Wired to a UI button on the SmartProxy settings page so the user
+     * can force-fix the proxy when they notice connectivity dying.
+     */
+    @JvmStatic
+    fun triggerManualRecovery() {
+        worker?.post {
+            lastDownAtMs = 0L
+            consecutiveFailures = 0
+            recoverInline(reason = "manual")
+        }
     }
 
     private fun startService(ctx: Context) {

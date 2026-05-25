@@ -92,10 +92,12 @@ object DiagnosticExporter {
                                 "zoom=${lens.zoomRatioRange} maxDigital=${lens.maxDigitalZoom}",
                         )
                         if (lens.vendorKeys.isNotEmpty()) {
-                            w.appendLine("    vendorKeys = ${lens.vendorKeys}")
+                            w.appendLine("    vendorKeys (${lens.vendorKeys.size}):")
+                            lens.vendorKeys.forEach { k -> w.appendLine("      $k") }
                         }
                         if (lens.sessionKeys.isNotEmpty()) {
-                            w.appendLine("    sessionKeys = ${lens.sessionKeys}")
+                            w.appendLine("    sessionKeys (${lens.sessionKeys.size}):")
+                            lens.sessionKeys.forEach { k -> w.appendLine("      $k") }
                         }
                     }
                 } catch (t: Throwable) {

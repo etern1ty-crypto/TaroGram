@@ -230,12 +230,27 @@ class TaroCameraSession(
         val range = try {
             chars.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE)
         } catch (_: Throwable) { null }
-        val ratio = TaroCameraConfig.resolveBackZoomRatio(range) ?: return
-        try {
-            req.set(CaptureRequest.CONTROL_ZOOM_RATIO, ratio)
-            Log.i(TAG, "applyLensZoom mode=${TaroCameraConfig.lensMode} ratio=$ratio range=$range")
-        } catch (t: Throwable) {
-            Log.w(TAG, "applyLensZoom set failed", t)
+
+        // Standard ZOOM_RATIO clamped to HAL range.
+        val ratio = TaroCameraConfig.resolveBackZoomRatio(range)
+        if (ratio != null) {
+            try {
+                req.set(CaptureRequest.CONTROL_ZOOM_RATIO, ratio)
+                Log.i(TAG, "applyLensZoom mode=${TaroCameraConfig.lensMode} ratio=$ratio range=$range")
+            } catch (t: Throwable) {
+                Log.w(TAG, "applyLensZoom set failed", t)
+            }
+        }
+
+        // OPPO/Realme/OnePlus vendor key. Pushes the *unclamped* ratio
+        // so values below `range.lower` (e.g. 0.6 for ultra-wide) still
+        // route through the HAL's wide path even when the public range
+        // starts at 1.0.
+        if (TaroCameraConfig.useOplusVendorZoom) {
+            val unclamped = TaroCameraConfig.resolveBackZoomRatioUnclamped()
+            if (unclamped != null) {
+                TaroCameraVendorKeys.applyOplusZoomRatio(req, unclamped)
+            }
         }
     }
 
