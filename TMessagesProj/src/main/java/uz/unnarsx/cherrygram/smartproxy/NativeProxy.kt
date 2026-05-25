@@ -5,9 +5,9 @@
  * which is licensed under GPL-3.0. This file (the Kotlin glue) is licensed under
  * the same terms as the rest of TaroGram / Cherrygram (GPL-2.0-or-later).
  *
- * The .so files live in TMessagesProj/jniLibs/<abi>/libtgwsproxy.so along with
- * libjnidispatch.so (the JNA runtime). They are bundled into the APK by the
- * existing jniLibs source set declaration in build.gradle.
+ * libtgwsproxy.so lives in TMessagesProj/src/main/jniLibs/<abi>/. libjnidispatch.so
+ * (the JNA runtime) is provided by the net.java.dev.jna:jna AAR — bundling it
+ * ourselves causes mergeNativeLibs to fail with a duplicate-file error.
  */
 package uz.unnarsx.cherrygram.smartproxy
 

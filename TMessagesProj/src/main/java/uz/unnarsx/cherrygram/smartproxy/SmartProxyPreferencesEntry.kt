@@ -138,4 +138,12 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
             }
         }
     }
+
+    override fun onLongClick(
+        item: UItem,
+        view: View,
+        position: Int,
+        x: Float,
+        y: Float,
+    ): Boolean = false
 }

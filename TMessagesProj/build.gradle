@@ -70,8 +70,9 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
 
     // TaroGram SmartProxy: JNA is used to call the native libtgwsproxy.so MTProto-WS proxy
-    // (compiled from amurcanov/tg-ws-proxy-android, GPL-3.0). The corresponding
-    // libjnidispatch.so is shipped under jniLibs/<abi>/.
+    // (compiled from amurcanov/tg-ws-proxy-android, GPL-3.0). The JNA AAR ships the
+    // libjnidispatch.so runtime for all ABIs; libtgwsproxy.so is bundled separately
+    // under src/main/jniLibs/<abi>/ for arm64-v8a + armeabi-v7a.
     implementation 'net.java.dev.jna:jna:5.13.0@aar'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
     implementation 'com.google.android.play:review:2.0.2'
