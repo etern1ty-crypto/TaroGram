@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import uz.unnarsx.cherrygram.camera.TaroCameraEnhancements;
 import uz.unnarsx.cherrygram.camera.VideoMessagesHelper;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -494,6 +495,7 @@ public class Camera2Session {
             if (recordingVideo) {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, VideoMessagesHelper.getCameraXFpsRange());
                 captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                TaroCameraEnhancements.applyVideoCaptureEnhancements(captureRequestBuilder, cameraCharacteristics);
             }
 
             if (sensorSize != null && Math.abs(currentZoom - 1f) >= 0.01f) {
