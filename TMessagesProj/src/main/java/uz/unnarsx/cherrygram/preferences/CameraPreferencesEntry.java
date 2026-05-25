@@ -60,6 +60,10 @@ public class CameraPreferencesEntry extends UniversalFragment {
     private final int exposureSliderRow = 9;
     private final int cameraControlButtonsRow = 10;
     private final int taroPreferWideAngleRow = 11;
+    // TaroCamera (TAROGRAM_CAMERA=4) engine entry — surfaced only when the
+    // user picks TaroCamera in the selector. Opens the full engine UI
+    // (lens probe, lens picker, stab/HDR/NR/bitrate/FPS/resolution).
+    private final int taroCameraSettingsRow = 12;
 
     @Override
     protected CharSequence getTitle() {
@@ -136,6 +140,10 @@ public class CameraPreferencesEntry extends UniversalFragment {
                     .setChecked(CherrygramCameraConfig.INSTANCE.getTaroPreferWideAngle())
             );
         }
+        // TaroCamera entry — only relevant when the user is on the new engine.
+        if (CherrygramCameraConfig.INSTANCE.getCameraType() == CherrygramCameraConfig.TAROGRAM_CAMERA) {
+            items.add(UItem.asButton(taroCameraSettingsRow, getString(R.string.TG_TaroCamera_OpenSettings), getString(R.string.TG_TaroCamera_OpenSettings_Desc)));
+        }
         items.add(UItem.asShadow(null));
     }
 
@@ -202,6 +210,8 @@ public class CameraPreferencesEntry extends UniversalFragment {
                 CherrygramCameraConfig.INSTANCE.setCameraResolution(types.get(i));
                 SettingsHelper.updateButtonValue(view, CherrygramCameraConfig.INSTANCE.getCameraResolution() + "p");
             });
+        } else if (item.id == taroCameraSettingsRow) {
+            uz.unnarsx.cherrygram.preferences.CherrygramPreferencesNavigator.INSTANCE.createTaroCamera(this);
         } else if (item.id == exposureSliderRow) {
             ArrayList<String> configStringKeys = new ArrayList<>();
             ArrayList<Integer> configValues = new ArrayList<>();
@@ -269,7 +279,9 @@ public class CameraPreferencesEntry extends UniversalFragment {
         return switch (CherrygramCameraConfig.INSTANCE.getCameraType()) {
             case CherrygramCameraConfig.TELEGRAM_CAMERA -> "Telegram";
             case CherrygramCameraConfig.CAMERA_X -> "CameraX";
-            case CherrygramCameraConfig.CAMERA_2 -> "TaroGram (Camera 2)";
+            case CherrygramCameraConfig.CAMERA_2 -> "Camera 2";
+            case CherrygramCameraConfig.SYSTEM_CAMERA -> getString(R.string.CP_CameraTypeSystem);
+            case CherrygramCameraConfig.TAROGRAM_CAMERA -> "TaroCamera";
             default -> getString(R.string.CP_CameraTypeSystem);
         };
     }
@@ -279,6 +291,7 @@ public class CameraPreferencesEntry extends UniversalFragment {
             case CherrygramCameraConfig.TELEGRAM_CAMERA -> getString(R.string.CP_DefaultCameraDesc);
             case CherrygramCameraConfig.CAMERA_X -> getString(R.string.CP_CameraXDesc);
             case CherrygramCameraConfig.CAMERA_2 -> getString(R.string.CP_Camera2Desc);
+            case CherrygramCameraConfig.TAROGRAM_CAMERA -> getString(R.string.TG_TaroCamera_Advise);
             default -> getString(R.string.CP_SystemCameraDesc);
         };
 
