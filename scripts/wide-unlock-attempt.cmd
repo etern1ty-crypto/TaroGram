@@ -1,47 +1,47 @@
 @echo off
 REM ---------------------------------------------------------------------------
-REM TaroGram wide-angle UNLOCK ATTEMPT for Realme/OPPO/OnePlus.
+REM TaroGram wide-angle UNLOCK ATTEMPT v2.
 REM
-REM Hypothesis from the prior probe: the gate that hides cameras 2 (WIDE),
-REM 3 (MACRO) and 4 (MAIN-FULL) is the `persist.camera.privapp.list`
-REM allow-list. The stock OPPO Camera is on that list; we are not. If we
-REM add our package to it and bounce cameraserver, the framework should
-REM stop filtering those cameras out for us.
+REM v1 hit the Android property value limit (92 bytes). v2 replaces the
+REM unused 'com.oplus.engineercamera' entry (factory-engineering build, not
+REM user-facing) with our package, staying under the 92-byte limit while
+REM keeping the stock OPLUS Camera (com.oplus.camera) in the allow-list.
 REM
-REM Mapping established from dumpsys media.camera (Camera HAL device static
-REM information block):
-REM   Device 0: BACK,  focal 5.59mm, sensor 8.19x6.14    -> MAIN (cropped)
-REM   Device 1: FRONT, focal 3.23mm, sensor 4.61x3.46    -> SELFIE
-REM   Device 2: BACK,  focal 1.68mm, sensor 3.26x2.45    -> WIDE  <- want this
-REM   Device 3: BACK,  focal 1.63mm, sensor 2.80x2.10    -> MACRO/AUX
-REM   Device 4: BACK,  focal 5.59mm, sensor 8.19x6.14    -> MAIN (full)
+REM Final list:
+REM   com.oneplus.camera,com.oppo.camera,uz.unnarsx.cherrygram,com.oplus.camera
+REM   (72 bytes, well under the 92-byte limit)
 REM
-REM REQUIREMENTS: root + adb. SELinux mode is irrelevant -- this is a
-REM framework-level filter, not an SELinux one. No SELinux denials were
-REM observed for cameraserver access in the previous probe.
+REM Camera providers also need to restart properly. We use init's
+REM `ctl.restart` and `ctl.stop`/`ctl.start` props instead of `killall`
+REM which was tearing down the QCom HAL provider without bringing it back.
 REM
 REM Usage:
 REM     scripts\wide-unlock-attempt.cmd
 REM
-REM Output:
-REM   wide-unlock-{stamp}.txt -- before/after dumpsys media.camera plus
-REM                              the setprop transaction. Send it back.
+REM Or to verify after a manual reboot (skip the setprop+restart phase):
+REM     scripts\wide-unlock-attempt.cmd verify
 REM ---------------------------------------------------------------------------
 
 setlocal enabledelayedexpansion
 
 set "PKG=uz.unnarsx.cherrygram"
 set "PRIVAPP_PROP=persist.camera.privapp.list"
+set "NEW_LIST=com.oneplus.camera,com.oppo.camera,uz.unnarsx.cherrygram,com.oplus.camera"
+
+set "MODE=full"
+if /i "%~1"=="verify" set "MODE=verify"
 
 for /f "tokens=2 delims==" %%I in ('wmic os get localdatetime /value ^| find "="') do set DT=%%I
 set "STAMP=%DT:~0,8%-%DT:~8,6%"
 set "OUT=wide-unlock-%STAMP%.txt"
 
-echo TaroGram wide-angle unlock attempt
-echo ----------------------------------
+echo TaroGram wide-angle unlock attempt v2
+echo --------------------------------------
 echo Output: %OUT%
-echo Package to add: %PKG%
-echo Property: %PRIVAPP_PROP%
+echo Mode  : %MODE%
+echo Target: %PKG%
+echo New value of %PRIVAPP_PROP%:
+echo   %NEW_LIST%
 echo.
 
 adb get-state >nul 2>&1
@@ -50,77 +50,69 @@ if errorlevel 1 (
     exit /b 1
 )
 
-> "%OUT%" echo TaroGram wide-angle unlock attempt -- %STAMP%
+> "%OUT%" echo TaroGram wide-angle unlock attempt v2 -- %STAMP%
+>> "%OUT%" echo Mode: %MODE%
 >> "%OUT%" echo Package: %PKG%
+>> "%OUT%" echo Target new list: %NEW_LIST%
 >> "%OUT%" echo.
 
-echo [step 1/8] Capture BEFORE state of the privapp list and camera count...
+echo [step] BEFORE state...
 call :hdr "BEFORE: persist.camera.privapp.list"
 call :run "getprop %PRIVAPP_PROP%"
 
 call :hdr "BEFORE: dumpsys media.camera head"
 call :run "dumpsys media.camera | head -10"
 
-echo [step 2/8] Read current privapp list value...
-for /f "delims=" %%V in ('adb shell getprop %PRIVAPP_PROP%') do set "CUR_LIST=%%V"
-echo   current list: !CUR_LIST!
+if /i "%MODE%"=="verify" goto :verify
 
-REM Sanity-check: if our package is already in the list, do not modify.
-echo !CUR_LIST! | findstr /C:"%PKG%" >nul
-if not errorlevel 1 (
-    echo   our package is already in the list. No change needed.
-    >> "%OUT%" echo NOTE: %PKG% was already in %PRIVAPP_PROP% -- no modification done.
-    goto :verify
-)
-
-set "NEW_LIST=!CUR_LIST!,%PKG%"
-echo   new list: !NEW_LIST!
-
-echo [step 3/8] Verify root...
+echo [step] verify root...
 adb shell "su -c 'id'" 1>"%TEMP%\rootcheck.txt" 2>&1
-set "ROOT_OK=n"
-findstr /C:"uid=0" "%TEMP%\rootcheck.txt" >nul && set "ROOT_OK=y"
-if /i "%ROOT_OK%"=="n" (
+findstr /C:"uid=0" "%TEMP%\rootcheck.txt" >nul
+if errorlevel 1 (
     echo [error] root not available. su returned:
     type "%TEMP%\rootcheck.txt"
     >> "%OUT%" echo ERROR: root not available, aborting.
     type "%TEMP%\rootcheck.txt" >> "%OUT%"
     exit /b 2
 )
-echo   root available.
+echo   root OK.
 
-echo [step 4/8] setprop %PRIVAPP_PROP% with appended package...
-call :hdr "ACTION: setprop %PRIVAPP_PROP% to add %PKG%"
-adb shell "su -c 'setprop %PRIVAPP_PROP% \"!NEW_LIST!\"'" >> "%OUT%" 2>&1
+echo [step] setprop %PRIVAPP_PROP% to new shorter list...
+call :hdr "ACTION: setprop %PRIVAPP_PROP%"
+adb shell "su -c 'setprop %PRIVAPP_PROP% \"%NEW_LIST%\"'" >> "%OUT%" 2>&1
 call :run "getprop %PRIVAPP_PROP%"
 
-echo [step 5/8] killall cameraserver to force re-read of the prop...
-call :hdr "ACTION: killall cameraserver"
-adb shell "su -c 'killall cameraserver'" >> "%OUT%" 2>&1
-
-echo [step 6/8] wait 4s for cameraserver to come back up...
-ping -n 5 127.0.0.1 >nul
-
-call :hdr "AFTER kill: cameraserver process"
+echo [step] restart camera provider + cameraserver via init (not killall)...
+call :hdr "ACTION: ctl.restart camera-provider"
+adb shell "su -c 'setprop ctl.restart camera-provider-2-7'" >> "%OUT%" 2>&1
+ping -n 3 127.0.0.1 >nul
 call :run "ps -A | grep -iE 'cameraserver|camera.provider'"
 
+call :hdr "ACTION: ctl.restart cameraserver"
+adb shell "su -c 'setprop ctl.restart cameraserver'" >> "%OUT%" 2>&1
+ping -n 4 127.0.0.1 >nul
+call :run "ps -A | grep -iE 'cameraserver|camera.provider'"
+
+echo [step] wait 6s for cameraserver to enumerate cameras...
+ping -n 7 127.0.0.1 >nul
+
 :verify
-echo [step 7/8] AFTER state of the camera count...
+echo [step] AFTER state...
 call :hdr "AFTER: dumpsys media.camera head"
 call :run "dumpsys media.camera | head -10"
 
-echo [step 8/8] full per-device characteristics summary (5 devices)...
-call :hdr "AFTER: dumpsys media.camera per-device facing+focal"
+call :hdr "AFTER: dumpsys media.camera full -- look for 5 devices"
 call :run "dumpsys media.camera"
 
 echo.
 echo Done. Send %OUT% back to Devin.
 echo.
-echo Quick read for you:
-echo   - if BEFORE said 'public camera devices visible to API1: 2'
-echo     and AFTER says ': 5'  -- the unlock WORKED.
-echo   - if AFTER still says ': 2' -- the gate is elsewhere; send the file
-echo     and we will try the next vector.
+echo Read:
+echo   - BEFORE 'public camera devices visible to API1: 2' is normal.
+echo   - AFTER 'public ... : 5' = unlock WORKED.
+echo   - AFTER 'Number of camera devices: 0' = cameraserver did not finish
+echo     re-enumerating. REBOOT the phone (persist.* survives) and run:
+echo         scripts\wide-unlock-attempt.cmd verify
 echo.
 
 exit /b 0
