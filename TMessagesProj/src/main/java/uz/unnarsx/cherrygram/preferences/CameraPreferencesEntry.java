@@ -269,7 +269,7 @@ public class CameraPreferencesEntry extends UniversalFragment {
         return switch (CherrygramCameraConfig.INSTANCE.getCameraType()) {
             case CherrygramCameraConfig.TELEGRAM_CAMERA -> "Telegram";
             case CherrygramCameraConfig.CAMERA_X -> "CameraX";
-            case CherrygramCameraConfig.CAMERA_2 -> "Camera 2 (Telegram)";
+            case CherrygramCameraConfig.CAMERA_2 -> "TaroGram (Camera 2)";
             default -> getString(R.string.CP_CameraTypeSystem);
         };
     }

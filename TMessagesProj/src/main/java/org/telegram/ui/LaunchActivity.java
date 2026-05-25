@@ -9103,6 +9103,9 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         CherrygramChatsConfig.INSTANCE.init();
         CherrygramCoreConfig.INSTANCE.init();
         CherrygramPrivacyConfig.INSTANCE.init();
+        // TaroGram: if the user enabled Smart Proxy in a previous session,
+        // start it now (the manager is a no-op if the flag is off).
+        uz.unnarsx.cherrygram.smartproxy.SmartProxyManager.maybeAutoStart();
     }
     /** Cherrygram finish */
 

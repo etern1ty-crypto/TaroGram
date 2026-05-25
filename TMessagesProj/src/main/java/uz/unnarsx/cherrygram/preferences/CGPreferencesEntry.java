@@ -35,6 +35,7 @@ public class CGPreferencesEntry extends UniversalFragment {
     private final int cameraRow = 4;
     private final int experimentalRow = 5;
     private final int privacyRow = 6;
+    private final int smartProxyRow = 12;
 
     private final int supportRow = 7;
     private final int exportRow = 8;
@@ -64,6 +65,7 @@ public class CGPreferencesEntry extends UniversalFragment {
         items.add(UItem.asButton(cameraRow, R.drawable.camera_solar, getString(R.string.CP_Category_Camera)));
 //        items.add(UItem.asButton(experimentalRow, R.drawable.msg_fave_solar, getString(R.string.EP_Category_Experimental)));
         items.add(UItem.asButton(privacyRow, R.drawable.msg_secret_solar, getString(R.string.SettingsPrivacySecurity)));
+        items.add(UItem.asButton(smartProxyRow, R.drawable.shield_network_filled_solar, getString(R.string.TG_SmartProxy_Category)));
         items.add(UItem.asShadow(null));
 
         items.add(UItem.asHeader(getString(R.string.LocalOther)));
@@ -92,6 +94,8 @@ public class CGPreferencesEntry extends UniversalFragment {
             CherrygramPreferencesNavigator.INSTANCE.createExperimental(this);
         } else if (item.id == privacyRow) {
             CherrygramPreferencesNavigator.INSTANCE.createPrivacy(this);
+        } else if (item.id == smartProxyRow) {
+            CherrygramPreferencesNavigator.INSTANCE.createSmartProxy(this);
         } else if (item.id == supportRow) {
             CherrygramPreferencesNavigator.INSTANCE.createDonate(this);
         } else if (item.id == exportRow) {

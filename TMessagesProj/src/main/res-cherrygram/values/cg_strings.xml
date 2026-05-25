@@ -397,6 +397,23 @@
     <string name="CP_RearCam_Desc">Instead of front camera for video messages</string>
     <string name="TG_PreferWideAngle">Prefer ultra-wide camera</string>
     <string name="TG_PreferWideAngle_Desc">If your ROM exposes the ultra-wide back camera (often hidden by Realme / OPPO HAL — install SennaCamUnlock if so) the Camera2 video pipeline will use it for round video messages.</string>
+
+    <!-- TaroGram Smart Proxy -->
+    <string name="TG_SmartProxy_Category">TaroGram Smart Proxy</string>
+    <string name="TG_SmartProxy_Enabled">Smart Proxy</string>
+    <string name="TG_SmartProxy_Enabled_Desc">Local MTProto-over-WebSocket proxy that helps reach Telegram on restrictive networks. Based on amurcanov/tg-ws-proxy-android (GPL-3.0).</string>
+    <string name="TG_SmartProxy_AutoApply">Apply to Telegram automatically</string>
+    <string name="TG_SmartProxy_AutoApply_Desc">When the Smart Proxy starts, route this app\'s Telegram connection through 127.0.0.1:port.</string>
+    <string name="TG_SmartProxy_CloudFlare">Use CloudFlare WS</string>
+    <string name="TG_SmartProxy_CloudFlare_Desc">Tunnel through CloudFlare-fronted WebSocket endpoints. Disable for a direct datacenter TLS path.</string>
+    <string name="TG_SmartProxy_Port">Local port</string>
+    <string name="TG_SmartProxy_Watchdog">Auto-recovery interval (sec)</string>
+    <string name="TG_SmartProxy_Watchdog_Desc">If the proxy reports a dropped connection or fatal error, TaroGram restarts it within this many seconds.</string>
+    <string name="TG_SmartProxy_RegenerateSecret">Regenerate MTProto secret</string>
+    <string name="TG_SmartProxy_Title">TaroGram Smart Proxy</string>
+    <string name="TG_SmartProxy_Running">Running on %1$s</string>
+    <string name="TG_SmartProxy_Status_On">Running</string>
+    <string name="TG_SmartProxy_Status_Off">Stopped</string>
     <string name="CP_DisableCam">Camera button at bottom</string>
     <string name="CP_DisableCam_Desc">The camera button will appear next to the gallery button. \nTap to open Telegram Camera, hold to launch the system camera.</string>
 
