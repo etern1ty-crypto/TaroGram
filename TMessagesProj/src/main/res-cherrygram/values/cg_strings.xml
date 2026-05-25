@@ -414,6 +414,27 @@
     <string name="TG_SmartProxy_Running">Running on %1$s</string>
     <string name="TG_SmartProxy_Status_On">Running</string>
     <string name="TG_SmartProxy_Status_Off">Stopped</string>
+    <!-- TaroCamera Engine -->
+    <string name="TG_TaroCamera_Title">TaroCamera</string>
+    <string name="TG_TaroCamera_Advise">&lt;b&gt;TaroCamera&lt;/b&gt; is TaroGram&apos;s own Camera2 engine. It probes every camera ID the HAL exposes (including ones hidden from getCameraIdList) and lets you pick the lens, stabilization mode, HDR mode, codec bitrate, FPS and resolution per session.&lt;br/&gt;&lt;br/&gt;This iteration ships the diagnostic + settings UI. Round-video capture still uses Camera 2 under the hood; switch to it in the next build.</string>
+    <string name="TG_TaroCamera_Diag_Header">Detected lenses</string>
+    <string name="TG_TaroCamera_Diag_Empty">No lenses detected yet — open this screen to run the probe.</string>
+    <string name="TG_TaroCamera_Diag_Refresh">Re-run probe</string>
+    <string name="TG_TaroCamera_LensHeader">Lens selection</string>
+    <string name="TG_TaroCamera_BackLens">Back lens</string>
+    <string name="TG_TaroCamera_FrontLens">Front lens</string>
+    <string name="TG_TaroCamera_QualityHeader">Capture quality</string>
+    <string name="TG_TaroCamera_Stab">Stabilization</string>
+    <string name="TG_TaroCamera_Hdr">HDR</string>
+    <string name="TG_TaroCamera_Resolution">Resolution</string>
+    <string name="TG_TaroCamera_Fps">Frames per second</string>
+    <string name="TG_TaroCamera_VideoBitrate">Video bitrate</string>
+    <string name="TG_TaroCamera_AudioBitrate">Audio bitrate</string>
+    <string name="TG_TaroCamera_NoiseReduction">Noise reduction</string>
+    <string name="TG_TaroCamera_Edge">Edge enhancement</string>
+    <string name="TG_TaroCamera_QualityFooter">These knobs are applied to every TaroCamera capture session. Higher resolutions / bitrates produce larger files and may not be supported by the back-camera HAL.</string>
+    <string name="TG_TaroCamera_OpenSettings">TaroCamera settings</string>
+    <string name="TG_TaroCamera_OpenSettings_Desc">Lens probe, lens picker and capture-quality knobs.</string>
     <string name="CP_DisableCam">Camera button at bottom</string>
     <string name="CP_DisableCam_Desc">The camera button will appear next to the gallery button. \nTap to open Telegram Camera, hold to launch the system camera.</string>
 

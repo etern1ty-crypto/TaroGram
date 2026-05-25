@@ -28,6 +28,13 @@ object CherrygramCameraConfig {
     const val CAMERA_X = 1
     const val CAMERA_2 = 2
     const val SYSTEM_CAMERA = 3
+    // TaroGram's own Camera2-based engine. Lives in
+    // uz.unnarsx.cherrygram.tarocamera and is completely independent of
+    // Cherrygram's Camera2Session. See TaroCameraEngine for the new
+    // architecture: blind-probe enumeration, logical+physical lens
+    // switching for Realme/OPPO HAL whitelist bypass, per-lens quality
+    // settings (stabilization / HDR / NR / bitrate / FPS / resolution).
+    const val TAROGRAM_CAMERA = 4
     var cameraType by sharedPreferences.int("CP_CameraType", TELEGRAM_CAMERA)
     /** Camera type finish */
 
