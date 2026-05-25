@@ -132,6 +132,7 @@ import uz.unnarsx.cherrygram.core.configs.CherrygramChatsConfig;
 import uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig;
 import uz.unnarsx.cherrygram.camera.CameraXUtils;
 import uz.unnarsx.cherrygram.camera.SlideControlView;
+import uz.unnarsx.cherrygram.camera.TaroCameraEnhancements;
 import uz.unnarsx.cherrygram.camera.VideoMessagesHelper;
 import uz.unnarsx.cherrygram.chats.AudioEnhance;
 
@@ -3407,7 +3408,10 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 audioFormat.setString(MediaFormat.KEY_MIME, AUDIO_MIME_TYPE);
                 audioFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, audioSampleRate);
                 audioFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 1);
-                audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, MessagesController.getInstance(currentAccount).roundAudioBitrate * 1024);
+                int taroAudioBitrate = TaroCameraEnhancements.getTaroAudioBitrate();
+                audioFormat.setInteger(MediaFormat.KEY_BIT_RATE, taroAudioBitrate > 0
+                        ? taroAudioBitrate
+                        : MessagesController.getInstance(currentAccount).roundAudioBitrate * 1024);
                 audioFormat.setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 2048 * AudioBufferInfo.MAX_SAMPLES);
 
                 audioEncoder = MediaCodec.createEncoderByType(AUDIO_MIME_TYPE);
@@ -3420,7 +3424,13 @@ public class InstantCameraView extends FrameLayout implements NotificationCenter
                 MediaFormat format = MediaFormat.createVideoFormat(VIDEO_MIME_TYPE, videoWidth, videoHeight);
 
                 format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-                format.setInteger(MediaFormat.KEY_BIT_RATE, videoBitrate);
+                int taroVideoBitrate = TaroCameraEnhancements.getTaroVideoBitrate();
+                if (taroVideoBitrate > 0) {
+                    format.setInteger(MediaFormat.KEY_BIT_RATE, taroVideoBitrate);
+                    format.setInteger(MediaFormat.KEY_BITRATE_MODE, MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR);
+                } else {
+                    format.setInteger(MediaFormat.KEY_BIT_RATE, videoBitrate);
+                }
                 format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
                 format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
 
