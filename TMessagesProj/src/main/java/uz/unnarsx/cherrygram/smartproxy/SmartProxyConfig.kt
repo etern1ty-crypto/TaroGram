@@ -72,9 +72,36 @@ object SmartProxyConfig {
     /**
      * Auto-recovery watchdog interval (seconds). Every N seconds the
      * [SmartProxyManager] polls [NativeProxy.getStats]; if the proxy reports
-     * no active connection or a fatal error we restart it.
+     * no active connection or a fatal error we run the recovery cascade.
      */
     var watchdogIntervalSec: Int
         get() = prefs.getInt("watchdog_sec", 30)
         set(v) = prefs.edit().putInt("watchdog_sec", v).apply()
+
+    /**
+     * If true, the watchdog will auto-flip between CloudFlare-WS mode and direct mode
+     * when the active transport is down but the device clearly has internet
+     * (8.8.8.8 reachable). This is what users want when CloudFlare is blocked
+     * locally but a direct DC TLS connection works, and vice versa.
+     */
+    var cloudFlareAutoFallback: Boolean
+        get() = prefs.getBoolean("cf_auto_fallback", true)
+        set(v) = prefs.edit().putBoolean("cf_auto_fallback", v).apply()
+
+    /**
+     * Cooldown (seconds) after the watchdog observes a "down" state before
+     * we run the diagnostic ping. Prevents thrashing when the proxy is just
+     * mid-restart or briefly idle.
+     */
+    var recoveryCooldownSec: Int
+        get() = prefs.getInt("recovery_cooldown_sec", 10)
+        set(v) = prefs.edit().putInt("recovery_cooldown_sec", v).apply()
+
+    /**
+     * Backoff (seconds) when 8.8.8.8 was unreachable — the device probably
+     * has no internet right now, so churning the proxy is pointless.
+     */
+    var noInternetBackoffSec: Int
+        get() = prefs.getInt("no_internet_backoff_sec", 30)
+        set(v) = prefs.edit().putInt("no_internet_backoff_sec", v).apply()
 }

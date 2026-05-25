@@ -414,6 +414,14 @@
     <string name="TG_SmartProxy_Running">Running on %1$s</string>
     <string name="TG_SmartProxy_Status_On">Running</string>
     <string name="TG_SmartProxy_Status_Off">Stopped</string>
+    <string name="TG_SmartProxy_CfAutoFallback">Auto-fallback CloudFlare ↔ direct</string>
+    <string name="TG_SmartProxy_CfAutoFallback_Desc">When the proxy stays down but 8.8.8.8 is reachable, automatically flip the transport (CloudFlare WS ↔ direct DC TLS) and try again. Keeps you online if one of the two is blocked locally.</string>
+    <string name="TG_SmartProxy_NotifStop">Stop</string>
+    <string name="TG_SmartProxy_RestartHint">Restart TaroGram for these changes to fully apply.</string>
+    <string name="TG_Diagnostic_Export">Export diagnostic</string>
+    <string name="TG_Diagnostic_Export_Desc">Generate a text report (build, camera probe, SmartProxy state, recent logcat) and share it.</string>
+    <string name="TG_Diagnostic_Share">Share TaroGram diagnostic</string>
+    <string name="TG_Diagnostic_Failed">Could not generate the diagnostic file. See logs for details.</string>
     <!-- TaroCamera Engine -->
     <string name="TG_TaroCamera_Title">TaroCamera</string>
     <string name="TG_TaroCamera_Advise">TaroCamera is TaroGram\'s own Camera2 engine. It probes every camera ID the HAL exposes (including ones hidden from getCameraIdList) and lets you pick the lens, stabilization mode, HDR mode, codec bitrate, FPS and resolution per session. This iteration ships the diagnostic + settings UI. Round-video capture still uses Camera 2 under the hood; switch to it in the next build.</string>
