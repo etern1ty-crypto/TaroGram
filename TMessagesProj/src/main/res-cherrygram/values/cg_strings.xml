@@ -416,7 +416,7 @@
     <string name="TG_SmartProxy_Status_Off">Stopped</string>
     <!-- TaroCamera Engine -->
     <string name="TG_TaroCamera_Title">TaroCamera</string>
-    <string name="TG_TaroCamera_Advise">&lt;b&gt;TaroCamera&lt;/b&gt; is TaroGram&apos;s own Camera2 engine. It probes every camera ID the HAL exposes (including ones hidden from getCameraIdList) and lets you pick the lens, stabilization mode, HDR mode, codec bitrate, FPS and resolution per session.&lt;br/&gt;&lt;br/&gt;This iteration ships the diagnostic + settings UI. Round-video capture still uses Camera 2 under the hood; switch to it in the next build.</string>
+    <string name="TG_TaroCamera_Advise">TaroCamera is TaroGram\'s own Camera2 engine. It probes every camera ID the HAL exposes (including ones hidden from getCameraIdList) and lets you pick the lens, stabilization mode, HDR mode, codec bitrate, FPS and resolution per session. This iteration ships the diagnostic + settings UI. Round-video capture still uses Camera 2 under the hood; switch to it in the next build.</string>
     <string name="TG_TaroCamera_Diag_Header">Detected lenses</string>
     <string name="TG_TaroCamera_Diag_Empty">No lenses detected yet — open this screen to run the probe.</string>
     <string name="TG_TaroCamera_Diag_Refresh">Re-run probe</string>
