@@ -39,6 +39,7 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.os.Build
 import android.util.Log
+import android.util.Range
 import android.util.Size
 import android.util.SizeF
 
@@ -60,6 +61,28 @@ data class TaroLens(
     val physicalIds: Set<String>,
     val hiddenFromCameraIdList: Boolean,
     val approxFovDeg: Float,
+    /**
+     * Inclusive [min, max] zoom ratio supported by the HAL via
+     * [android.hardware.camera2.CaptureRequest.CONTROL_ZOOM_RATIO] (API 30+).
+     * On Realme/OPPO logical-camera HALs, values below 1.0 route capture
+     * to the ultra-wide physical sub-sensor without exposing it as a
+     * separate ID. null = HAL does not advertise the key.
+     */
+    val zoomRatioRange: Range<Float>? = null,
+    /** Pre-API-30 fallback; usually [1.0, n]. null if unknown. */
+    val maxDigitalZoom: Float? = null,
+    /**
+     * Names of [android.hardware.camera2.CaptureRequest] keys this device
+     * accepts on a per-session basis. We surface this so a future
+     * iteration can target vendor extension keys (oplus.*, oem.* etc.) on
+     * SKUs where HAL-internal zoom routing does not cover the wide.
+     */
+    val sessionKeys: List<String> = emptyList(),
+    /**
+     * Vendor-namespaced characteristic keys (anything not starting with
+     * "android."). Best-effort — some OEMs hide their tags entirely.
+     */
+    val vendorKeys: List<String> = emptyList(),
 ) {
     /** "main" / "ultra-wide" / "tele" / "front" / "macro" / "unknown" — a
      * heuristic label based on focal length and FoV. The actual lens role
@@ -178,6 +201,24 @@ object TaroCameraEnumerator {
 
         val fov = approxFov(focal, sensorSize)
 
+        val zoomRange: Range<Float>? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try { chars.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE) } catch (_: Throwable) { null }
+        } else null
+        val maxDigital: Float? = try {
+            @Suppress("DEPRECATION")
+            chars.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)
+        } catch (_: Throwable) { null }
+
+        val sessionKeys: List<String> = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                chars.availableSessionKeys?.map { it.name }?.filter { !it.startsWith("android.") } ?: emptyList()
+            } catch (_: Throwable) { emptyList() }
+        } else emptyList()
+
+        val vendorKeys: List<String> = try {
+            chars.keys.map { it.name }.filter { !it.startsWith("android.") }
+        } catch (_: Throwable) { emptyList() }
+
         return TaroLens(
             id = id,
             facing = facing,
@@ -193,6 +234,10 @@ object TaroCameraEnumerator {
             physicalIds = physicalIds,
             hiddenFromCameraIdList = hidden,
             approxFovDeg = fov,
+            zoomRatioRange = zoomRange,
+            maxDigitalZoom = maxDigital,
+            sessionKeys = sessionKeys,
+            vendorKeys = vendorKeys,
         )
     }
 
@@ -215,8 +260,11 @@ object TaroCameraEnumerator {
                     "role=${l.guessRole()}  focal=${l.focalLength}mm  " +
                     "fov=${"%.1f".format(l.approxFovDeg)}deg  " +
                     "logical=${l.isLogicalMultiCamera}  physIds=${l.physicalIds}  " +
+                    "zoom=${l.zoomRatioRange ?: "n/a"} maxDigital=${l.maxDigitalZoom ?: "n/a"}  " +
                     "stab=${l.supportsVideoStab}  ois=${l.supportsOpticalStab}  hdr=${l.supportsHdr}",
             )
+            if (l.vendorKeys.isNotEmpty()) Log.i(TAG, "   vendorKeys = ${l.vendorKeys}")
+            if (l.sessionKeys.isNotEmpty()) Log.i(TAG, "   sessionKeys = ${l.sessionKeys}")
         }
         Log.i(TAG, "================================")
     }

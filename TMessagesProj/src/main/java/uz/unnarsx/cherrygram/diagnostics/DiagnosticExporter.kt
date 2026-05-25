@@ -88,8 +88,15 @@ object DiagnosticExporter {
                                 "fps=${lens.supportedFps} stab=${lens.supportsVideoStab} " +
                                 "ois=${lens.supportsOpticalStab} hdr=${lens.supportsHdr} " +
                                 "logical=${lens.isLogicalMultiCamera} phys=${lens.physicalIds} " +
-                                "hidden=${lens.hiddenFromCameraIdList} fov=${lens.approxFovDeg}deg",
+                                "hidden=${lens.hiddenFromCameraIdList} fov=${lens.approxFovDeg}deg " +
+                                "zoom=${lens.zoomRatioRange} maxDigital=${lens.maxDigitalZoom}",
                         )
+                        if (lens.vendorKeys.isNotEmpty()) {
+                            w.appendLine("    vendorKeys = ${lens.vendorKeys}")
+                        }
+                        if (lens.sessionKeys.isNotEmpty()) {
+                            w.appendLine("    sessionKeys = ${lens.sessionKeys}")
+                        }
                     }
                 } catch (t: Throwable) {
                     w.appendLine("ERROR: ${t.message}")

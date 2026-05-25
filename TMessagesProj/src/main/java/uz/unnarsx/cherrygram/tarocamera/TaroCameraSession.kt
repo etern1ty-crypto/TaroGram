@@ -213,6 +213,30 @@ class TaroCameraSession(
             "fast" -> req.set(CaptureRequest.EDGE_MODE, CameraMetadata.EDGE_MODE_FAST)
             "high_quality" -> req.set(CaptureRequest.EDGE_MODE, CameraMetadata.EDGE_MODE_HIGH_QUALITY)
         }
+        applyLensZoom(req)
+    }
+
+    /**
+     * Applies CONTROL_ZOOM_RATIO so the HAL routes capture to the desired
+     * physical sub-sensor on logical-camera-style SKUs (Realme/OPPO/
+     * OnePlus). This is the trick the stock camera app uses to reach the
+     * ultra-wide on devices where physical IDs 2/3/4 are marked SYSTEM-only.
+     */
+    private fun applyLensZoom(req: CaptureRequest.Builder) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        val chars = try {
+            cm.getCameraCharacteristics(parentLogicalId ?: lensId)
+        } catch (_: Throwable) { return }
+        val range = try {
+            chars.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE)
+        } catch (_: Throwable) { null }
+        val ratio = TaroCameraConfig.resolveBackZoomRatio(range) ?: return
+        try {
+            req.set(CaptureRequest.CONTROL_ZOOM_RATIO, ratio)
+            Log.i(TAG, "applyLensZoom mode=${TaroCameraConfig.lensMode} ratio=$ratio range=$range")
+        } catch (t: Throwable) {
+            Log.w(TAG, "applyLensZoom set failed", t)
+        }
     }
 
     fun stop() {

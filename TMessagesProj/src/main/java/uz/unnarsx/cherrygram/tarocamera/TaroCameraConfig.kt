@@ -34,6 +34,15 @@ object TaroCameraConfig {
     // When false: open each physical id directly (works for hidden IDs on
     // Realme/OPPO when the HAL allows it).
 
+    // Lens mode for the back camera. "auto" = whatever the lens picker
+    // says; "main"/"wide"/"tele" override zoom ratio so that HAL-internal
+    // routing on logical-camera-style SKUs (Realme/OPPO/OnePlus) picks the
+    // matching physical sensor without us ever having to open it directly.
+    private const val KEY_LENS_MODE = "lens_mode" // "auto"|"main"|"wide"|"tele"
+    private const val KEY_CUSTOM_ZOOM_RATIO = "custom_zoom_ratio"
+    private const val KEY_WIDE_ZOOM_RATIO = "wide_zoom_ratio"
+    private const val KEY_TELE_ZOOM_RATIO = "tele_zoom_ratio"
+
     private val prefs by lazy { ApplicationLoader.applicationContext.getSharedPreferences(PREFS_NAME, 0) }
 
     var backLensId: String
@@ -79,6 +88,40 @@ object TaroCameraConfig {
     var useLogicalPhysicalSwitch: Boolean
         get() = prefs.getBoolean(KEY_USE_LOGICAL_PHYSICAL_SWITCH, true)
         set(v) = prefs.edit().putBoolean(KEY_USE_LOGICAL_PHYSICAL_SWITCH, v).apply()
+
+    var lensMode: String
+        get() = prefs.getString(KEY_LENS_MODE, "auto") ?: "auto"
+        set(v) = prefs.edit().putString(KEY_LENS_MODE, v).apply()
+
+    var customZoomRatio: Float
+        get() = prefs.getFloat(KEY_CUSTOM_ZOOM_RATIO, 1.0f)
+        set(v) = prefs.edit().putFloat(KEY_CUSTOM_ZOOM_RATIO, v).apply()
+
+    var wideZoomRatio: Float
+        get() = prefs.getFloat(KEY_WIDE_ZOOM_RATIO, 0.6f)
+        set(v) = prefs.edit().putFloat(KEY_WIDE_ZOOM_RATIO, v).apply()
+
+    var teleZoomRatio: Float
+        get() = prefs.getFloat(KEY_TELE_ZOOM_RATIO, 3.0f)
+        set(v) = prefs.edit().putFloat(KEY_TELE_ZOOM_RATIO, v).apply()
+
+    /**
+     * Resolves the desired CONTROL_ZOOM_RATIO value for the back camera,
+     * clamped to the HAL-supported zoom range. Returns null for "auto" or
+     * when the HAL has no zoom range advertised (caller should not set the
+     * key in that case).
+     */
+    fun resolveBackZoomRatio(range: android.util.Range<Float>?): Float? {
+        if (range == null) return null
+        val target = when (lensMode) {
+            "main" -> 1.0f
+            "wide" -> wideZoomRatio
+            "tele" -> teleZoomRatio
+            "custom" -> customZoomRatio
+            else -> return null
+        }
+        return target.coerceIn(range.lower, range.upper)
+    }
 
     fun targetResolution(): android.util.Size? = when (resolution) {
         "480" -> android.util.Size(640, 480)

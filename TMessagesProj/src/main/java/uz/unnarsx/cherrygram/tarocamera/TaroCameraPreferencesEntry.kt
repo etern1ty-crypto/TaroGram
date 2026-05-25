@@ -28,6 +28,9 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
     private val backLensRow = 100
     private val frontLensRow = 101
     private val refreshInventoryRow = 102
+    private val lensModeRow = 103
+    private val wideZoomRow = 104
+    private val teleZoomRow = 105
 
     private val stabilizationRow = 201
     private val hdrRow = 202
@@ -71,6 +74,10 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
                 if (lens.supportsVideoStab) tags += "stab"
                 if (lens.supportsOpticalStab) tags += "OIS"
                 if (lens.supportsHdr) tags += "HDR"
+                if (lens.zoomRatioRange != null) {
+                    val r = lens.zoomRatioRange
+                    tags += "zoom=${"%.1f".format(r.lower)}-${"%.1f".format(r.upper)}x"
+                }
                 val subtitle = buildString {
                     append("focal=${"%.2f".format(lens.focalLength)}mm  ")
                     append("fov=${"%.0f".format(lens.approxFovDeg)}\u00B0")
@@ -106,8 +113,32 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
                 describeChosenLens(TaroCameraConfig.frontLensId, back = false),
             ),
         )
-
-        items.add(UItem.asShadow(null))
+        items.add(
+            UItem.asButton(
+                lensModeRow,
+                getString(R.string.TG_TaroCamera_LensMode),
+                describeLensMode(),
+            ),
+        )
+        if (TaroCameraConfig.lensMode == "wide" || TaroCameraConfig.lensMode == "custom") {
+            items.add(
+                UItem.asButton(
+                    wideZoomRow,
+                    getString(R.string.TG_TaroCamera_WideZoom),
+                    "${"%.2f".format(TaroCameraConfig.wideZoomRatio)}x",
+                ),
+            )
+        }
+        if (TaroCameraConfig.lensMode == "tele" || TaroCameraConfig.lensMode == "custom") {
+            items.add(
+                UItem.asButton(
+                    teleZoomRow,
+                    getString(R.string.TG_TaroCamera_TeleZoom),
+                    "${"%.2f".format(TaroCameraConfig.teleZoomRatio)}x",
+                ),
+            )
+        }
+        items.add(UItem.asShadow(getString(R.string.TG_TaroCamera_LensFooter)))
         items.add(UItem.asHeader(getString(R.string.TG_TaroCamera_QualityHeader)))
         items.add(
             UItem.asButton(
@@ -208,6 +239,21 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
                 listOf("off", "fast", "high_quality"),
                 TaroCameraConfig.edgeEnhancement,
             ) { TaroCameraConfig.edgeEnhancement = it; listView.adapter.update(true) }
+            lensModeRow -> pickEnum(
+                getString(R.string.TG_TaroCamera_LensMode),
+                listOf("auto", "main", "wide", "tele", "custom"),
+                TaroCameraConfig.lensMode,
+            ) { TaroCameraConfig.lensMode = it; listView.adapter.update(true) }
+            wideZoomRow -> pickFloat(
+                getString(R.string.TG_TaroCamera_WideZoom),
+                listOf(0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f),
+                TaroCameraConfig.wideZoomRatio,
+            ) { TaroCameraConfig.wideZoomRatio = it; listView.adapter.update(true) }
+            teleZoomRow -> pickFloat(
+                getString(R.string.TG_TaroCamera_TeleZoom),
+                listOf(1.5f, 2.0f, 2.5f, 3.0f, 5.0f, 10.0f),
+                TaroCameraConfig.teleZoomRatio,
+            ) { TaroCameraConfig.teleZoomRatio = it; listView.adapter.update(true) }
         }
     }
 
@@ -257,6 +303,25 @@ class TaroCameraPreferencesEntry : UniversalFragment() {
             }
             .setNegativeButton(getString(R.string.Cancel), null)
             .show()
+    }
+
+    private fun pickFloat(title: CharSequence, values: List<Float>, current: Float, onPick: (Float) -> Unit) {
+        val activity = parentActivity ?: return
+        AlertDialog.Builder(activity, resourceProvider)
+            .setTitle(title as CharSequence)
+            .setItems(values.map { "${"%.2f".format(it)}x" + if (kotlin.math.abs(it - current) < 0.001f) "  ✓" else "" }.toTypedArray()) { _, which ->
+                onPick(values[which])
+            }
+            .setNegativeButton(getString(R.string.Cancel), null)
+            .show()
+    }
+
+    private fun describeLensMode(): String = when (TaroCameraConfig.lensMode) {
+        "main" -> "Main (1.0x)"
+        "wide" -> "Wide (${"%.2f".format(TaroCameraConfig.wideZoomRatio)}x)"
+        "tele" -> "Tele (${"%.2f".format(TaroCameraConfig.teleZoomRatio)}x)"
+        "custom" -> "Custom"
+        else -> "Auto"
     }
 
     private fun describeChosenLens(id: String, back: Boolean): String {

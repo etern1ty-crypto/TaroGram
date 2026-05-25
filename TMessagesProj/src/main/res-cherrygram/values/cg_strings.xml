@@ -431,6 +431,10 @@
     <string name="TG_TaroCamera_LensHeader">Lens selection</string>
     <string name="TG_TaroCamera_BackLens">Back lens</string>
     <string name="TG_TaroCamera_FrontLens">Front lens</string>
+    <string name="TG_TaroCamera_LensMode">Lens mode</string>
+    <string name="TG_TaroCamera_WideZoom">Wide zoom ratio</string>
+    <string name="TG_TaroCamera_TeleZoom">Tele zoom ratio</string>
+    <string name="TG_TaroCamera_LensFooter">Lens mode sets CONTROL_ZOOM_RATIO on the back camera. On Realme/OPPO/OnePlus HALs that internally route physical sub-sensors by zoom, values below 1.0 switch to ultra-wide. Range and effectiveness depend on the HAL; check Detected lenses above for the actual supported zoom range.</string>
     <string name="TG_TaroCamera_QualityHeader">Capture quality</string>
     <string name="TG_TaroCamera_Stab">Stabilization</string>
     <string name="TG_TaroCamera_Hdr">HDR</string>

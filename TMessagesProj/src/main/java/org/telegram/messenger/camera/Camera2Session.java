@@ -524,6 +524,23 @@ public class Camera2Session {
                 captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, cropRegion);
             }
 
+            // TaroCamera lens-mode override: on Realme/OPPO/OnePlus HALs the
+            // ultra-wide is reached by setting CONTROL_ZOOM_RATIO < 1.0 on
+            // the back logical camera. Honor TaroCameraConfig.lensMode here
+            // so the user can record round videos through the wide lens
+            // without ever leaving Camera 2 (Telegram) mode.
+            if (!isFront && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                try {
+                    Range<Float> zoomRange = cameraCharacteristics.get(CameraCharacteristics.CONTROL_ZOOM_RATIO_RANGE);
+                    Float zoomRatio = uz.unnarsx.cherrygram.tarocamera.TaroCameraConfig.INSTANCE.resolveBackZoomRatio(zoomRange);
+                    if (zoomRatio != null) {
+                        captureRequestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio);
+                    }
+                } catch (Throwable t) {
+                    FileLog.e("Camera2Session: TaroCamera zoom_ratio override failed", t);
+                }
+            }
+
             captureRequestBuilder.addTarget(surface);
             captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, handler);
         } catch (Exception e) {
