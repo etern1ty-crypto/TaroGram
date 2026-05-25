@@ -67,6 +67,15 @@ object CherrygramCameraConfig {
 
     var rearCam by sharedPreferences.boolean("CP_RearCam", false)
 
+    /**
+     * TaroGram: when on, the Camera2 instant video pipeline will pick the
+     * back-facing camera with the shortest focal length (ultra-wide). On
+     * stock Realme / OPPO ROMs the HAL hides the physical wide-angle ID
+     * from third-party apps; in that case this falls back to the regular
+     * back camera. After installing SennaCamUnlock this will be honoured.
+     */
+    var taroPreferWideAngle by sharedPreferences.boolean("TG_PreferWideAngle", false)
+
     var videoMessagesResolution by sharedPreferences.int("CG_Round_Video_Resolution", 512)
     var videoMessagesFlashWarmthIntensity by sharedPreferences.float("CG_Round_Flash_Warmth_Intensity", 0.50f)
     var videoMessagesFlashIntensity by sharedPreferences.float("CG_Round_Flash_Intensity", 1f)

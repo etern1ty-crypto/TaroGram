@@ -59,6 +59,7 @@ public class CameraPreferencesEntry extends UniversalFragment {
 
     private final int exposureSliderRow = 9;
     private final int cameraControlButtonsRow = 10;
+    private final int taroPreferWideAngleRow = 11;
 
     @Override
     protected CharSequence getTitle() {
@@ -130,6 +131,11 @@ public class CameraPreferencesEntry extends UniversalFragment {
         items.add(SettingsHelper.asSwitchCG(cameraControlButtonsRow, getString(R.string.CP_CenterCameraControlButtons), getString(R.string.CP_CenterCameraControlButtons_Desc))
                 .setChecked(CherrygramCameraConfig.INSTANCE.getCenterCameraControlButtons())
         );
+        if (CherrygramCameraConfig.INSTANCE.getCameraType() == CherrygramCameraConfig.CAMERA_2) {
+            items.add(SettingsHelper.asSwitchCG(taroPreferWideAngleRow, getString(R.string.TG_PreferWideAngle), getString(R.string.TG_PreferWideAngle_Desc))
+                    .setChecked(CherrygramCameraConfig.INSTANCE.getTaroPreferWideAngle())
+            );
+        }
         items.add(UItem.asShadow(null));
     }
 
@@ -219,6 +225,9 @@ public class CameraPreferencesEntry extends UniversalFragment {
         } else if (item.id == cameraControlButtonsRow) {
             CherrygramCameraConfig.INSTANCE.setCenterCameraControlButtons(!CherrygramCameraConfig.INSTANCE.getCenterCameraControlButtons());
             SettingsHelper.updateCheckState(view, CherrygramCameraConfig.INSTANCE.getCenterCameraControlButtons());
+        } else if (item.id == taroPreferWideAngleRow) {
+            CherrygramCameraConfig.INSTANCE.setTaroPreferWideAngle(!CherrygramCameraConfig.INSTANCE.getTaroPreferWideAngle());
+            SettingsHelper.updateCheckState(view, CherrygramCameraConfig.INSTANCE.getTaroPreferWideAngle());
         }
     }
 
@@ -260,7 +269,7 @@ public class CameraPreferencesEntry extends UniversalFragment {
         return switch (CherrygramCameraConfig.INSTANCE.getCameraType()) {
             case CherrygramCameraConfig.TELEGRAM_CAMERA -> "Telegram";
             case CherrygramCameraConfig.CAMERA_X -> "CameraX";
-            case CherrygramCameraConfig.CAMERA_2 -> "Camera 2 (Telegram)";
+            case CherrygramCameraConfig.CAMERA_2 -> "TaroGram (Camera 2)";
             default -> getString(R.string.CP_CameraTypeSystem);
         };
     }

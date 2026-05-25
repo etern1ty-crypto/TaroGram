@@ -49,10 +49,14 @@ import uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig;
 
 public class CameraTypeSelector extends LinearLayout {
 
+    // TaroGram: relabel "Camera 2 (Telegram)" → "TaroGram (Camera 2)" so the
+    // user sees a TaroGram-branded engine entry. The underlying implementation
+    // is still Cherrygram's Camera2Session (enhanced with the ultra-wide
+    // picker and inventory logging), so this is purely a label change for now.
     String[] strings = new String[]{
             "Telegram",
             "CameraX",
-            "Camera 2 (Telegram)",
+            "TaroGram (Camera 2)",
             getString(R.string.CP_CameraTypeSystem),
     };
 

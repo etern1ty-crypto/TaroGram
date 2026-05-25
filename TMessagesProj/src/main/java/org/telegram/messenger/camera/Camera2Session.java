@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import uz.unnarsx.cherrygram.camera.TaroCameraEnhancements;
 import uz.unnarsx.cherrygram.camera.VideoMessagesHelper;
 
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -86,9 +87,18 @@ public class Camera2Session {
         final Context context = ApplicationLoader.applicationContext;
         final CameraManager cameraManager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
 
+        TaroCameraEnhancements.logCameraInventory(context);
+
         float bestAspectRatio = 0;
         Size bestSize = null;
         String cameraId = null;
+        // When the user asked for the back-facing camera and the TaroGram
+        // "prefer ultra-wide" setting is on, narrow the search to a specific
+        // wide camera ID (if exposed by the HAL — without root the OPLUS HAL
+        // hides physical ultra-wide cameras from third-party apps).
+        final String preferredBackId = !front && uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig.INSTANCE.getTaroPreferWideAngle()
+                ? TaroCameraEnhancements.pickBackCameraId(cameraManager, true)
+                : null;
         try {
             String[] cameraIds = cameraManager.getCameraIdList();
             for (int i = 0; i < cameraIds.length; ++i) {
@@ -96,6 +106,9 @@ public class Camera2Session {
                 CameraCharacteristics characteristics = cameraManager.getCameraCharacteristics(id);
                 if (characteristics == null) continue;
                 if (characteristics.get(CameraCharacteristics.LENS_FACING) != (front ? CameraCharacteristics.LENS_FACING_FRONT : CameraCharacteristics.LENS_FACING_BACK)) {
+                    continue;
+                }
+                if (preferredBackId != null && !preferredBackId.equals(id)) {
                     continue;
                 }
                 StreamConfigurationMap confMap = (StreamConfigurationMap) characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
@@ -494,6 +507,7 @@ public class Camera2Session {
             if (recordingVideo) {
                 captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, VideoMessagesHelper.getCameraXFpsRange());
                 captureRequestBuilder.set(CaptureRequest.CONTROL_CAPTURE_INTENT, CaptureRequest.CONTROL_CAPTURE_INTENT_VIDEO_RECORD);
+                TaroCameraEnhancements.applyVideoCaptureEnhancements(captureRequestBuilder, cameraCharacteristics);
             }
 
             if (sensorSize != null && Math.abs(currentZoom - 1f) >= 0.01f) {
