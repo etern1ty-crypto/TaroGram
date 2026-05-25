@@ -27,17 +27,23 @@
 
 package uz.unnarsx.cherrygram.camera;
 
+import android.content.Context;
+import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.CaptureRequest;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.telegram.messenger.FileLog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -137,6 +143,160 @@ public final class TaroCameraEnhancements {
      */
     public static int getTaroVideoBitrate() {
         return isEnhancementSupported() ? 1_200_000 : 0;
+    }
+
+    /**
+     * Pick the best back-facing camera ID for the TaroGram instant video pipeline.
+     * If {@code preferWide} is true, returns the back-facing camera with the
+     * shortest focal length (the ultra-wide). Falls back to the first back-facing
+     * camera otherwise.
+     *
+     * Returns {@code null} when the manager fails or no back camera is exposed.
+     */
+    @Nullable
+    public static String pickBackCameraId(@NonNull CameraManager mgr, boolean preferWide) {
+        try {
+            String[] ids = mgr.getCameraIdList();
+            String fallback = null;
+            String wideId = null;
+            float wideFocal = Float.MAX_VALUE;
+            for (String id : ids) {
+                CameraCharacteristics ch;
+                try {
+                    ch = mgr.getCameraCharacteristics(id);
+                } catch (Throwable t) {
+                    continue;
+                }
+                Integer facing = ch.get(CameraCharacteristics.LENS_FACING);
+                if (facing == null || facing != CameraCharacteristics.LENS_FACING_BACK) continue;
+                if (fallback == null) fallback = id;
+                if (!preferWide) continue;
+                float[] focals = ch.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                if (focals == null || focals.length == 0) continue;
+                float minFocal = Float.MAX_VALUE;
+                for (float f : focals) if (f > 0 && f < minFocal) minFocal = f;
+                if (minFocal < wideFocal) {
+                    wideFocal = minFocal;
+                    wideId = id;
+                }
+            }
+            return preferWide && wideId != null ? wideId : fallback;
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return null;
+        }
+    }
+
+    /**
+     * Dump the camera inventory to logcat. Useful for diagnosing wide / tele
+     * camera availability on devices like Realme GT Neo 5 where the HAL
+     * whitelists most physical IDs to the stock camera app.
+     *
+     * Called once per process; subsequent calls are no-ops.
+     */
+    private static volatile boolean inventoryLogged = false;
+    public static void logCameraInventory(@Nullable Context ctx) {
+        if (inventoryLogged || ctx == null) return;
+        inventoryLogged = true;
+        try {
+            CameraManager mgr = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
+            if (mgr == null) return;
+            String[] ids = mgr.getCameraIdList();
+            FileLog.d("TaroCamera: visible camera IDs = " + Arrays.toString(ids));
+            for (String id : ids) {
+                logCameraDetail(mgr, id, "  ");
+            }
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+    }
+
+    private static void logCameraDetail(@NonNull CameraManager mgr, @NonNull String id, @NonNull String prefix) {
+        try {
+            CameraCharacteristics ch = mgr.getCameraCharacteristics(id);
+            Integer facing = ch.get(CameraCharacteristics.LENS_FACING);
+            float[] focals = ch.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            int[] caps = ch.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            boolean isLogical = caps != null && contains(caps, CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+            FileLog.d(prefix + "TaroCamera: id=" + id
+                    + " facing=" + lensFacingName(facing)
+                    + " focal=" + Arrays.toString(focals)
+                    + (isLogical ? " LOGICAL" : ""));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Set<String> phys = ch.getPhysicalCameraIds();
+                if (phys != null && !phys.isEmpty()) {
+                    FileLog.d(prefix + "  physical IDs = " + phys);
+                    for (String pid : phys) {
+                        try {
+                            CameraCharacteristics pch = mgr.getCameraCharacteristics(pid);
+                            float[] pf = pch.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                            Integer pfacing = pch.get(CameraCharacteristics.LENS_FACING);
+                            FileLog.d(prefix + "    physical id=" + pid
+                                    + " facing=" + lensFacingName(pfacing)
+                                    + " focal=" + Arrays.toString(pf));
+                        } catch (Throwable inner) {
+                            FileLog.d(prefix + "    physical id=" + pid + " chars unavailable (" + inner.getMessage() + ")");
+                        }
+                    }
+                }
+            }
+        } catch (CameraAccessException e) {
+            FileLog.e(e);
+        } catch (Throwable t) {
+            FileLog.e(t);
+        }
+    }
+
+    private static String lensFacingName(@Nullable Integer facing) {
+        if (facing == null) return "?";
+        switch (facing) {
+            case CameraCharacteristics.LENS_FACING_FRONT: return "FRONT";
+            case CameraCharacteristics.LENS_FACING_BACK: return "BACK";
+            case CameraCharacteristics.LENS_FACING_EXTERNAL: return "EXTERNAL";
+            default: return "unknown(" + facing + ")";
+        }
+    }
+
+    private static boolean contains(@NonNull int[] arr, int v) {
+        for (int x : arr) if (x == v) return true;
+        return false;
+    }
+
+    /**
+     * Find the physical camera ID of the ultra-wide lens inside a logical
+     * multi-camera device, or null if the logical camera doesn't expose a
+     * wider physical lens than its own focal length.
+     */
+    @Nullable
+    public static String findWidePhysicalId(@NonNull CameraManager mgr, @NonNull String logicalId) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return null;
+        try {
+            CameraCharacteristics logical = mgr.getCameraCharacteristics(logicalId);
+            Set<String> physIds = logical.getPhysicalCameraIds();
+            if (physIds == null || physIds.isEmpty()) return null;
+            float[] logicalFocals = logical.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+            float refFocal = logicalFocals != null && logicalFocals.length > 0 ? logicalFocals[0] : Float.MAX_VALUE;
+            String widest = null;
+            float widestFocal = refFocal;
+            for (String pid : physIds) {
+                try {
+                    CameraCharacteristics pch = mgr.getCameraCharacteristics(pid);
+                    float[] pf = pch.get(CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS);
+                    if (pf == null || pf.length == 0) continue;
+                    float minF = Float.MAX_VALUE;
+                    for (float f : pf) if (f > 0 && f < minF) minF = f;
+                    if (minF < widestFocal) {
+                        widestFocal = minF;
+                        widest = pid;
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            return widest;
+        } catch (Throwable t) {
+            FileLog.e(t);
+            return null;
+        }
     }
 
     private static boolean supportsLowLightBoost(CameraCharacteristics ch) {

@@ -13,37 +13,40 @@ import uz.unnarsx.cherrygram.core.configs.CherrygramCoreConfig
 
 object Constants {
 
+    // TaroGram fork — channels, repo and URLs point to the TaroGram brand.
+    // The upstream Cherrygram channel and repo are credited in the About
+    // screen so the GPL attribution is preserved.
     @JvmField
-    var CG_AUTHOR = "Updates: @CherrygramAPKs"
+    var CG_AUTHOR = "Updates: @TaroGram"
 
     /** CG Links start**/
     @JvmField
-    var CG_CHANNEL_USERNAME = "cherrygram"
+    var CG_CHANNEL_USERNAME = "TaroGram"
     @JvmField
-    var CG_CHANNEL_URL = "https://t.me/cherrygram"
+    var CG_CHANNEL_URL = "https://t.me/TaroGram"
 
     @JvmField
-    var CG_APKS_CHANNEL_USERNAME = "CherrygramAPKs"
+    var CG_APKS_CHANNEL_USERNAME = "TaroGram"
     @JvmField
-    var CG_APKS_CHANNEL_URL = "https://t.me/CherrygramAPKs"
+    var CG_APKS_CHANNEL_URL = "https://t.me/TaroGram"
 
     @JvmField
-    var CG_CHAT_USERNAME = "CherrygramSupport"
+    var CG_CHAT_USERNAME = "TaroGramChat"
     @JvmField
-    var CG_CHAT_URL = "https://t.me/CherrygramSupport"
+    var CG_CHAT_URL = "https://t.me/TaroGramChat"
 
     @JvmField
-    var UPDATE_APP_URL = if (CherrygramCoreConfig.isPlayStoreBuild()) "https://play.google.com/store/apps/details?id=uz.unnarsx.cherrygram" else CG_CHANNEL_URL
+    var UPDATE_APP_URL = if (CherrygramCoreConfig.isPlayStoreBuild()) "https://play.google.com/store/apps/details?id=uz.unnarsx.cherrygram" else "https://github.com/etern1ty-crypto/TaroGram/releases/latest"
 
     @JvmField
-    var CG_PRIVACY_URL = "https://arslan4k1390.github.io/cherrygram/privacy"
+    var CG_PRIVACY_URL = "https://github.com/etern1ty-crypto/TaroGram"
     @JvmField
-    var CG_DONATIONS_AND_TERMS_URL = "https://arslan4k1390.github.io/cherrygram/donation-terms"
+    var CG_DONATIONS_AND_TERMS_URL = "https://github.com/etern1ty-crypto/TaroGram"
 
     @JvmField
     var CG_CROWDIN_URL = "https://crowdin.com/project/cherrygram"
     @JvmField
-    var CG_GITHUB_URL = "https://github.com/arsLan4k1390/Cherrygram"
+    var CG_GITHUB_URL = "https://github.com/etern1ty-crypto/TaroGram"
 
     @JvmField
     var CG_SAFESTARS = "https://safestars.pro/?partner=cherrygram"

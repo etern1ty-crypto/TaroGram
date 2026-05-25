@@ -9096,7 +9096,10 @@ public class LaunchActivity extends BasePermissionsActivity implements INavigati
         if (CherrygramCoreConfig.INSTANCE.getAutoOTA()) {
             checkCgUpdates(getSafeLastFragment(), null, false);
         }
-        if (!CherrygramCoreConfig.isPlayStoreBuild()) CherrygramExtras.INSTANCE.checkChannelFollow(this, currentAccount);
+        // TaroGram: do not auto-prompt the user to follow the upstream Cherrygram
+        // channel. We ship our own update channel via UpdaterUtils and don't want
+        // the user nagged on every cold-start.
+        // if (!CherrygramCoreConfig.isPlayStoreBuild()) CherrygramExtras.INSTANCE.checkChannelFollow(this, currentAccount);
         CherrygramChatsConfig.INSTANCE.init();
         CherrygramCoreConfig.INSTANCE.init();
         CherrygramPrivacyConfig.INSTANCE.init();
