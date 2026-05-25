@@ -32,6 +32,10 @@ object CherrygramPreferencesNavigator {
 
     fun createCamera(fragment: BaseFragment) = fragment.presentFragment(CameraPreferencesEntry())
 
+    fun createSmartProxy(fragment: BaseFragment) = fragment.presentFragment(uz.unnarsx.cherrygram.smartproxy.SmartProxyPreferencesEntry())
+
+    fun createTaroCamera(fragment: BaseFragment) = fragment.presentFragment(uz.unnarsx.cherrygram.tarocamera.TaroCameraPreferencesEntry())
+
     fun createExperimental(fragment: BaseFragment) = fragment.presentFragment(ExperimentalPreferencesEntry())
 
     fun createPrivacy(fragment: BaseFragment) = fragment.presentFragment(PrivacyPreferencesEntry())

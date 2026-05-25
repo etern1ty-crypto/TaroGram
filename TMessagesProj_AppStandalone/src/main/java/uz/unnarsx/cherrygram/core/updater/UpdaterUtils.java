@@ -63,8 +63,10 @@ public class UpdaterUtils {
 
     public static final DispatchQueue otaQueue = new DispatchQueue("otaQueue");
 
-    private static final String RELEASE_URI = "https://api.github.com/repos/arsLan4k1390/Cherrygram/releases/latest";
-    private static final String BETA_URI = "https://api.github.com/repos/arsLan4k1390/CherrygramBeta-APKs/releases/latest";
+    // TaroGram fork — pull updates from our own GitHub release endpoint instead of
+    // the upstream arsLan4k1390/Cherrygram repository.
+    private static final String RELEASE_URI = "https://api.github.com/repos/etern1ty-crypto/TaroGram/releases/latest";
+    private static final String BETA_URI = "https://api.github.com/repos/etern1ty-crypto/TaroGram/releases/latest";
     public static String downloadURL = null;
     public static String version, changelog, size, uploadDate;
     public static File otaPath, versionPath, apkFile;

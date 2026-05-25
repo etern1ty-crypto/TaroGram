@@ -49,18 +49,33 @@ import uz.unnarsx.cherrygram.core.configs.CherrygramCameraConfig;
 
 public class CameraTypeSelector extends LinearLayout {
 
+    // TaroGram lineup:
+    //   - "Telegram"      = legacy Camera1 path
+    //   - "CameraX"       = AndroidX CameraX
+    //   - "Camera 2"      = stock Camera2Session (Cherrygram's existing impl)
+    //   - "System"        = OEM camera app
+    //   - "TaroCamera"    = TaroGram's own engine in uz.unnarsx.cherrygram.tarocamera
+    //                       (Camera2 with blind-probe enumeration, logical+physical
+    //                        lens switching, per-lens quality knobs). Iteration 1
+    //                        ships diagnostic + settings UI only; round-video
+    //                        capture is wired in the next iteration.
     String[] strings = new String[]{
             "Telegram",
             "CameraX",
-            "Camera 2 (Telegram)",
+            "Camera 2",
             getString(R.string.CP_CameraTypeSystem),
+            "TaroCamera",
     };
 
     int[] icons = new int[]{
             R.drawable.camera_icon_telegram,
             R.drawable.camera_icon_cherrygram,
             R.drawable.camera_icon_camerax,
-            R.drawable.camera_icon_system
+            R.drawable.camera_icon_system,
+            // The TaroGram engine reuses the Cherrygram icon for now — it
+            // is the closest visual to "TaroGram-native" without bundling
+            // a new asset for this iteration.
+            R.drawable.camera_icon_cherrygram,
     };
     int currentIcon = CherrygramCameraConfig.INSTANCE.getCameraType();
 
