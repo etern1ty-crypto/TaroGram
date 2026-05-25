@@ -102,13 +102,15 @@ jobs:
           echo "Patched Extra.kt:"
           grep -E "APP_ID|APP_HASH" "$EXTRA" | head -2
 
-      - name: Disable Firebase Crashlytics upload (debug builds don't need it)
-        run: |
-          set -e
-          for f in TMessagesProj_AppStandalone/build.gradle TMessagesProj_App/build.gradle; do
-            [ -f "$f" ] || continue
-            sed -i "s|apply plugin: 'com.google.firebase.crashlytics'|//apply plugin: 'com.google.firebase.crashlytics'|" "$f"
-          done
+      # NOTE: We intentionally do NOT disable the Crashlytics Gradle plugin.
+      # The previous workflow commented out `apply plugin: 'com.google.firebase.crashlytics'`,
+      # which broke the app at startup with:
+      #   IllegalStateException: The Crashlytics build ID is missing.
+      # The plugin generates a build-id properties file that FirebaseInitProvider
+      # reads at runtime. Cherrygram ships a real google-services.json so the
+      # plugin runs fine without our intervention. The plugin will still try to
+      # upload mappings for *release* builds, but debug builds skip mapping/symbol
+      # upload because R8/minify is disabled.
 
       - name: Build Standalone APK (afatStandalone${{ env.BUILD_TYPE == 'debug' && 'Debug' || 'Release' }})
         run: |
