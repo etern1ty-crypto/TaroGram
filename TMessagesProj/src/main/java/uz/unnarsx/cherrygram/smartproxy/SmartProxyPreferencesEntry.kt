@@ -11,9 +11,11 @@ import android.content.Context
 import android.view.View
 import org.telegram.messenger.LocaleController.getString
 import org.telegram.messenger.R
+import org.telegram.ui.Components.BulletinFactory
 import org.telegram.ui.Components.UItem
 import org.telegram.ui.Components.UniversalAdapter
 import org.telegram.ui.Components.UniversalFragment
+import uz.unnarsx.cherrygram.diagnostics.DiagnosticExporter
 import uz.unnarsx.cherrygram.preferences.helpers.SettingsHelper
 
 class SmartProxyPreferencesEntry : UniversalFragment() {
@@ -21,10 +23,12 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
     private val enabledRow = 1
     private val autoApplyRow = 2
     private val cloudFlareRow = 3
-    private val portRow = 4
-    private val watchdogRow = 5
-    private val regenSecretRow = 6
-    private val statusRow = 7
+    private val cfAutoFallbackRow = 4
+    private val portRow = 5
+    private val watchdogRow = 6
+    private val regenSecretRow = 7
+    private val statusRow = 8
+    private val diagnosticRow = 9
 
     override fun getTitle(): CharSequence = getString(R.string.TG_SmartProxy_Category)
 
@@ -58,6 +62,14 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
                 getString(R.string.TG_SmartProxy_CloudFlare),
                 getString(R.string.TG_SmartProxy_CloudFlare_Desc),
             ).setChecked(SmartProxyConfig.cloudFlareEnabled),
+        )
+
+        items.add(
+            SettingsHelper.asSwitchCG(
+                cfAutoFallbackRow,
+                getString(R.string.TG_SmartProxy_CfAutoFallback),
+                getString(R.string.TG_SmartProxy_CfAutoFallback_Desc),
+            ).setChecked(SmartProxyConfig.cloudFlareAutoFallback),
         )
 
         items.add(UItem.asShadow(null))
@@ -100,6 +112,16 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
                 statusText,
             ),
         )
+
+        items.add(UItem.asShadow(null))
+
+        items.add(
+            UItem.asButton(
+                diagnosticRow,
+                getString(R.string.TG_Diagnostic_Export),
+                getString(R.string.TG_Diagnostic_Export_Desc),
+            ),
+        )
     }
 
     override fun onClick(item: UItem, view: View, position: Int, x: Float, y: Float) {
@@ -112,24 +134,32 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
                     SmartProxyManager.stop(context!!)
                 }
                 SettingsHelper.updateCheckState(view, newValue)
+                showRestartHint()
                 listView.adapter.update(true)
             }
             autoApplyRow -> {
                 SmartProxyConfig.autoApplyToTelegram = !SmartProxyConfig.autoApplyToTelegram
                 SettingsHelper.updateCheckState(view, SmartProxyConfig.autoApplyToTelegram)
+                showRestartHint()
             }
             cloudFlareRow -> {
                 SmartProxyConfig.cloudFlareEnabled = !SmartProxyConfig.cloudFlareEnabled
                 SettingsHelper.updateCheckState(view, SmartProxyConfig.cloudFlareEnabled)
-                if (SmartProxyManager.isRunning) {
-                    // Apply on next start. We do not hot-reload Go config from here.
-                }
+                if (SmartProxyManager.isRunning) showRestartHint()
+            }
+            cfAutoFallbackRow -> {
+                SmartProxyConfig.cloudFlareAutoFallback = !SmartProxyConfig.cloudFlareAutoFallback
+                SettingsHelper.updateCheckState(view, SmartProxyConfig.cloudFlareAutoFallback)
             }
             regenSecretRow -> {
                 val newSecret = ByteArray(16).also { java.util.Random().nextBytes(it) }
                     .joinToString("") { "%02x".format(it) }
                 SmartProxyConfig.secret = newSecret
+                if (SmartProxyManager.isRunning) showRestartHint()
                 listView.adapter.update(true)
+            }
+            diagnosticRow -> {
+                DiagnosticExporter.exportAndShare(context!!)
             }
             else -> {
                 // Port and watchdog interval are read-only buttons for the first
@@ -146,4 +176,13 @@ class SmartProxyPreferencesEntry : UniversalFragment() {
         x: Float,
         y: Float,
     ): Boolean = false
+
+    private fun showRestartHint() {
+        try {
+            BulletinFactory.of(this).createSimpleBulletin(
+                R.raw.info,
+                getString(R.string.TG_SmartProxy_RestartHint),
+            ).show()
+        } catch (_: Throwable) { /* fragment not yet attached, ignore */ }
+    }
 }

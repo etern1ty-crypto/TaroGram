@@ -173,7 +173,17 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         }
 
         public void setProxy(SharedConfig.ProxyInfo proxyInfo) {
-            textView.setText(proxyInfo.address + ":" + proxyInfo.port);
+            // TaroGram: nicer label when this entry is our local SmartProxy
+            // (it always lives on 127.0.0.1 / ::1 on the user's configured port).
+            // Falls back to "address:port" for every other proxy.
+            String addr = proxyInfo.address;
+            boolean isSmartProxy = ("127.0.0.1".equals(addr) || "::1".equals(addr) || "localhost".equals(addr))
+                && proxyInfo.port == uz.unnarsx.cherrygram.smartproxy.SmartProxyConfig.INSTANCE.getPort();
+            if (isSmartProxy) {
+                textView.setText(LocaleController.getString(R.string.TG_SmartProxy_Title) + " (" + addr + ":" + proxyInfo.port + ")");
+            } else {
+                textView.setText(proxyInfo.address + ":" + proxyInfo.port);
+            }
             currentInfo = proxyInfo;
         }
 
