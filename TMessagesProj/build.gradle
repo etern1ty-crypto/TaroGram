@@ -68,6 +68,12 @@ dependencies {
     //Cherrygram
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+
+    // TaroGram SmartProxy: JNA is used to call the native libtgwsproxy.so MTProto-WS proxy
+    // (compiled from amurcanov/tg-ws-proxy-android, GPL-3.0). The JNA AAR ships the
+    // libjnidispatch.so runtime for all ABIs; libtgwsproxy.so is bundled separately
+    // under src/main/jniLibs/<abi>/ for arm64-v8a + armeabi-v7a.
+    implementation 'net.java.dev.jna:jna:5.13.0@aar'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.1'
     implementation 'com.google.android.play:review:2.0.2'
     implementation 'com.google.firebase:firebase-analytics:23.0.0'
@@ -115,7 +121,11 @@ android {
     buildToolsVersion = '36.0.0'
     ndkVersion "21.4.7075529" // 26.3.11579264
 
-    sourceSets.main.jniLibs.srcDirs = ['./jni/']
+    // TaroGram: keep upstream jni/ as the source dir for CMake-built libraries.
+    // Prebuilt third-party .so files (libtgwsproxy.so, libjnidispatch.so for the
+    // Smart Proxy) live under src/main/jniLibs/<abi>/ which is the AGP default
+    // and is not in .gitignore (unlike the module-level ./jniLibs/).
+    sourceSets.main.jniLibs.srcDirs = ['./jni/', 'src/main/jniLibs']
 
     externalNativeBuild {
         cmake {

@@ -937,6 +937,15 @@
             android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
             android:value="org.telegram.messenger.chromecast.ChromecastOptionsProvider" />
 
+        <!-- TaroGram Smart Proxy foreground service (local MTProto-WS proxy from
+             amurcanov/tg-ws-proxy-android). Uses dataSync FGS type so we are
+             allowed to do continuous network I/O while the app is in the
+             background. -->
+        <service
+            android:name="uz.unnarsx.cherrygram.smartproxy.SmartProxyService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
     </application>
 
 </manifest>

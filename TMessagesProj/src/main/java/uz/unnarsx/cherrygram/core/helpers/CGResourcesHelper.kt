@@ -34,13 +34,13 @@ object CGResourcesHelper {
     @JvmStatic
     fun getAppName(): String {
         if (CherrygramCoreConfig.isStandaloneStableBuild() || CherrygramCoreConfig.isPlayStoreBuild()) {
-            return "Cherrygram"
+            return "TaroGram"
         } else if (CherrygramCoreConfig.isStandaloneBetaBuild()) {
-            return "Cherrygram Beta"
+            return "TaroGram Beta"
         } else if (CherrygramCoreConfig.isStandalonePremiumBuild()) {
-            return "Cherrygram Premium"
+            return "TaroGram Premium"
         } else if (CherrygramCoreConfig.isDevBuild()) {
-            return "Cherrygram Dev"
+            return "TaroGram Dev"
         }
         return getString(R.string.CG_AppName)
     }

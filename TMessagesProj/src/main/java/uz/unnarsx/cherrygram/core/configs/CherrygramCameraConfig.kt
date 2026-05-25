@@ -28,6 +28,13 @@ object CherrygramCameraConfig {
     const val CAMERA_X = 1
     const val CAMERA_2 = 2
     const val SYSTEM_CAMERA = 3
+    // TaroGram's own Camera2-based engine. Lives in
+    // uz.unnarsx.cherrygram.tarocamera and is completely independent of
+    // Cherrygram's Camera2Session. See TaroCameraEngine for the new
+    // architecture: blind-probe enumeration, logical+physical lens
+    // switching for Realme/OPPO HAL whitelist bypass, per-lens quality
+    // settings (stabilization / HDR / NR / bitrate / FPS / resolution).
+    const val TAROGRAM_CAMERA = 4
     var cameraType by sharedPreferences.int("CP_CameraType", TELEGRAM_CAMERA)
     /** Camera type finish */
 
@@ -66,6 +73,15 @@ object CherrygramCameraConfig {
     var exposureSlider by sharedPreferences.int("CP_ExposureSlider", EXPOSURE_SLIDER_RIGHT)
 
     var rearCam by sharedPreferences.boolean("CP_RearCam", false)
+
+    /**
+     * TaroGram: when on, the Camera2 instant video pipeline will pick the
+     * back-facing camera with the shortest focal length (ultra-wide). On
+     * stock Realme / OPPO ROMs the HAL hides the physical wide-angle ID
+     * from third-party apps; in that case this falls back to the regular
+     * back camera. After installing SennaCamUnlock this will be honoured.
+     */
+    var taroPreferWideAngle by sharedPreferences.boolean("TG_PreferWideAngle", false)
 
     var videoMessagesResolution by sharedPreferences.int("CG_Round_Video_Resolution", 512)
     var videoMessagesFlashWarmthIntensity by sharedPreferences.float("CG_Round_Flash_Warmth_Intensity", 0.50f)
